@@ -50,6 +50,7 @@
     [...el.children].forEach((c) => c.setAttribute('aria-hidden', 'true'));
   }
 
+  // cada palabra dentro de una máscara: el párrafo sube en ola al entrar
   function splitWords(el) {
     let i = 0;
     [...el.childNodes].forEach((n) => {
@@ -58,20 +59,21 @@
       n.textContent.split(/(\s+)/).forEach((word) => {
         if (!word) return;
         if (/^\s+$/.test(word)) { frag.appendChild(document.createTextNode(' ')); return; }
+        const m = document.createElement('span');
+        m.className = 'm';
         const s = document.createElement('span');
         s.className = 'w';
         s.style.setProperty('--i', i++);
         s.textContent = word;
-        frag.appendChild(s);
+        m.appendChild(s);
+        frag.appendChild(m);
       });
       n.replaceWith(frag);
     });
-    el.style.setProperty('--n', i);
   }
 
   $$('[data-split]').forEach(splitChars);
-  const wordBlocks = $$('[data-words]');
-  wordBlocks.forEach(splitWords);
+  $$('[data-words]').forEach(splitWords);
 
   // hero: "MediaKit" letra por letra
   const heroWord = $('[data-hero-word]');
@@ -87,7 +89,7 @@
   }
 
   // índices de stagger
-  $$('.kpis li, .service, .phones .phone, .features li, .contact__list li, .menu__inner a').forEach((el) => {
+  $$('.service, .phones .phone, .features li, .contact__list li, .menu__inner a').forEach((el) => {
     el.style.setProperty('--i', [...el.parentElement.children].indexOf(el));
   });
   $$('.tabs i').forEach((el, i) => el.style.setProperty('--i', i % 4));
@@ -105,14 +107,10 @@
   const revealIO = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
-      (proxies.get(e.target) || [e.target]).forEach((el) => {
-        el.classList.add('is-in');
-        if (el.hasAttribute('data-count')) countUp(el);
-        $$('[data-count]', el).forEach(countUp);
-      });
+      (proxies.get(e.target) || [e.target]).forEach((el) => el.classList.add('is-in'));
       revealIO.unobserve(e.target);
     });
-  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.01 });
+  }, { rootMargin: '0px 100% -6% 100%', threshold: 0.01 }); // los costados amplios revelan también lo que está fuera de pantalla en los carruseles
   const observeReveal = (el) => {
     if (/^(clip|rise)$/.test(el.dataset.reveal || '')) {
       const host = el.parentElement;
@@ -120,33 +118,40 @@
       proxies.get(host).push(el);
     } else revealIO.observe(el);
   };
-  $$('[data-reveal], [data-split], .tabs').forEach(observeReveal);
+  $$('[data-reveal], [data-split], [data-words], .tabs').forEach(observeReveal);
 
-  /* ---------- contadores ---------- */
+  /* ---------- contadores: todos juntos, desde cerca del valor final ---------- */
   const fmt = (v, dec) => v.toLocaleString('es-UY', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-  function countUp(el) {
-    if (el.dataset.counted) return;
-    el.dataset.counted = '1';
-    const to = parseFloat(el.dataset.count);
-    const dec = parseInt(el.dataset.decimals || '0', 10);
-    const pre = el.dataset.prefix || '';
-    const suf = el.dataset.suffix || '';
-    if (reduced) { el.textContent = pre + fmt(to, dec) + suf; return; }
-    const dur = 1600 + Math.min(900, Math.log10(to + 1) * 180);
-    const t0 = performance.now();
-    const tick = (t) => {
-      const p = clamp((t - t0) / dur, 0, 1);
-      const e = 1 - Math.pow(1 - p, 4);
-      el.textContent = pre + fmt(dec ? to * e : Math.round(to * e), dec) + suf;
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+  const COUNT_FROM = 0.6;   // arrancan en el 60% del valor
+  const COUNT_MS = 1100;    // y terminan todos a la vez
+  const counters = $$('[data-count]').map((el) => ({
+    el,
+    to: parseFloat(el.dataset.count),
+    dec: parseInt(el.dataset.decimals || '0', 10),
+    pre: el.dataset.prefix || '',
+    suf: el.dataset.suffix || '',
+  }));
+  const paint = (c, v) => { c.el.textContent = c.pre + fmt(c.dec ? v : Math.round(v), c.dec) + c.suf; };
+  if (!reduced && counters.length) {
+    counters.forEach((c) => paint(c, c.to * COUNT_FROM));
+    new IntersectionObserver((entries, io) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      const t0 = performance.now();
+      const tick = (t) => {
+        const p = clamp((t - t0) / COUNT_MS, 0, 1);
+        const e = 1 - Math.pow(1 - p, 3);
+        counters.forEach((c) => paint(c, c.to * (COUNT_FROM + (1 - COUNT_FROM) * e)));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { rootMargin: '0px 0px -10% 0px' }).observe($('.kpis'));
   }
 
   /* ---------- smooth scroll (solo desktop con mouse/trackpad) ---------- */
   let lenis = null;
   if (!reduced && finePointer && window.Lenis) {
-    lenis = new window.Lenis({ duration: 1.15, easing: (t) => 1 - Math.pow(1 - t, 4), smoothWheel: true, wheelMultiplier: 1 });
+    lenis = new window.Lenis({ lerp: 0.14, smoothWheel: true, wheelMultiplier: 1.05 });
   }
 
   // anclas
@@ -157,7 +162,7 @@
       if (!target) return;
       ev.preventDefault();
       closeMenu();
-      if (lenis) lenis.scrollTo(id === '#inicio' ? 0 : target, { duration: 1.6, offset: 0 });
+      if (lenis) lenis.scrollTo(id === '#inicio' ? 0 : target, { duration: 1.2, offset: 0 });
       else if (id === '#inicio') scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
       else target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
       history.replaceState(null, '', id);
@@ -180,80 +185,88 @@
   let ticking = false;
   let mouseY = -1;
 
-  function themeAt(y) {
-    for (const s of themed) {
+  // posiciones absolutas cacheadas: el loop de scroll no mide el DOM
+  let zones = [];
+  let spyTops = [];
+  let parallaxBoxes = [];
+  let docMax = 1;
+  function measure() {
+    const y = scrollY;
+    zones = themed.map((s) => {
       const r = s.getBoundingClientRect();
-      if (r.top <= y && r.bottom > y) return s.dataset.theme;
-    }
+      return { top: r.top + y, bottom: r.bottom + y, theme: s.dataset.theme };
+    });
+    spyTops = spies.map((s) => ({ id: s.id, top: s.getBoundingClientRect().top + y }));
+    parallaxBoxes = parallax.map((el) => {
+      const r = el.parentElement.getBoundingClientRect();
+      return { el, mid: r.top + y + r.height / 2, h: r.height, speed: parseFloat(el.dataset.speed) };
+    });
+    docMax = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    requestFrame();
+  }
+  function themeAt(docY) {
+    for (const z of zones) if (z.top <= docY && z.bottom > docY) return z.theme;
     return hero ? hero.dataset.theme : 'cream';
   }
+
+  // sólo toca el DOM cuando una clase cambia de verdad
+  const state = {};
+  const setClass = (el, cls, on) => {
+    const key = (el === nav ? 'nav.' : 'body.') + cls;
+    if (state[key] === on) return;
+    state[key] = on;
+    el.classList.toggle(cls, on);
+  };
 
   function frame() {
     ticking = false;
     const y = scrollY;
     const vh = innerHeight;
-    const max = document.documentElement.scrollHeight - vh;
 
-    // progreso
-    if (progress) progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+    if (progress) progress.style.transform = `scaleX(${y / docMax})`;
 
     // nav: color según sección, estado scrolled, ocultar al bajar
-    const navTheme = themeAt(28);
-    nav.classList.toggle('on-cream', navTheme === 'cream');
-    nav.classList.toggle('on-magenta', navTheme === 'magenta');
-    document.body.classList.toggle('nav-magenta', navTheme === 'magenta');
-    nav.classList.toggle('is-scrolled', y > 40);
+    const navTheme = themeAt(y + 28);
+    setClass(nav, 'on-cream', navTheme === 'cream');
+    setClass(nav, 'on-magenta', navTheme === 'magenta');
+    setClass(document.body, 'nav-magenta', navTheme === 'magenta');
+    setClass(nav, 'is-scrolled', y > 40);
     if (!root.classList.contains('menu-open')) {
-      const goingDown = y > lastY + 2;
-      const goingUp = y < lastY - 2;
-      if (goingDown && y > vh * 0.6) nav.classList.add('is-hidden');
-      else if (goingUp || y < vh * 0.6) nav.classList.remove('is-hidden');
+      if (y > lastY + 2 && y > vh * 0.6) setClass(nav, 'is-hidden', true);
+      else if (y < lastY - 2 || y < vh * 0.6) setClass(nav, 'is-hidden', false);
     }
     lastY = y;
 
     // link activo
     let active = null;
-    for (const s of spies) {
-      const r = s.getBoundingClientRect();
-      if (r.top <= vh * 0.45) active = s.id;
+    for (const s of spyTops) if (s.top <= y + vh * 0.45) active = s.id;
+    if (active !== state.active) {
+      state.active = active;
+      linkMap.forEach((a, id) => a.classList.toggle('is-active', id === active));
     }
-    linkMap.forEach((a, id) => a.classList.toggle('is-active', id === active));
 
     // hero se achica mientras la hoja crema sube
-    if (heroInner && !reduced) {
-      const p = clamp(y / vh, 0, 1);
-      if (p < 1) {
-        heroInner.style.transform = `translate3d(0, ${p * -6}%, 0) scale(${1 - p * 0.07})`;
-        heroInner.style.opacity = String(1 - p * 0.55);
-      }
-    }
-
-    // párrafos que se "encienden" con el scroll
-    if (!reduced) {
-      wordBlocks.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        if (r.bottom < -50 || r.top > vh + 50) return;
-        const p = clamp((vh * 0.88 - r.top) / (r.height + vh * 0.42), 0, 1);
-        el.style.setProperty('--p', p.toFixed(3));
-      });
+    if (heroInner && !reduced && y <= vh) {
+      const p = y / vh;
+      heroInner.style.transform = `translate3d(0, ${p * -6}%, 0) scale(${1 - p * 0.07})`;
+      heroInner.style.opacity = String(1 - p * 0.55);
     }
 
     // parallax suave (solo desktop)
     if (!reduced && isDesktop()) {
-      parallax.forEach((el) => {
-        const r = el.parentElement.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > vh) return;
-        const c = (r.top + r.height / 2 - vh / 2);
-        el.style.transform = `translate3d(0, ${c * parseFloat(el.dataset.speed)}px, 0) scale(1.1)`;
-      });
+      for (const b of parallaxBoxes) {
+        const c = b.mid - y - vh / 2;
+        if (Math.abs(c) > vh / 2 + b.h) continue;
+        b.el.style.transform = `translate3d(0, ${c * b.speed}px, 0) scale(1.1)`;
+      }
       spinners.forEach((el) => { el.style.transform = `rotate(${y * 0.12}deg)`; });
     }
 
     // color del cursor según fondo
-    if (cursor && mouseY >= 0) cursor.classList.toggle('on-magenta', themeAt(mouseY) === 'magenta');
+    if (cursor && mouseY >= 0) cursor.classList.toggle('on-magenta', themeAt(y + mouseY) === 'magenta');
   }
 
-  const requestFrame = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
+  function requestFrame() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
   if (lenis) {
     lenis.on('scroll', requestFrame);
     const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
@@ -261,8 +274,13 @@
   } else {
     addEventListener('scroll', requestFrame, { passive: true });
   }
-  addEventListener('resize', requestFrame);
-  frame();
+  // re-medir cuando cambia el alto de la página (imágenes, embeds de Instagram, resize)
+  let measureT;
+  const scheduleMeasure = () => { clearTimeout(measureT); measureT = setTimeout(measure, 120); };
+  new ResizeObserver(scheduleMeasure).observe(document.body);
+  addEventListener('resize', scheduleMeasure);
+  addEventListener('load', measure);
+  measure();
 
   /* ---------- menú mobile ---------- */
   const burger = $('.nav__burger');
@@ -436,6 +454,9 @@
       row.appendChild(c);
     });
   });
+  // pausar el carrusel fuera de pantalla (ahorra batería en el celular)
+  const marquee = $('.marquee');
+  if (marquee) new IntersectionObserver(([e]) => marquee.classList.toggle('is-paused', !e.isIntersecting)).observe(marquee);
 
   /* ---------- copiar mail ---------- */
   const toast = $('.toast');
