@@ -257,10 +257,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .is-ready .hero__scroll { opacity: 1; transform: none; }
 
 @media (max-width: 760px) {
-  .hero__name { font-size: 12.4cqi; }
+  .hero__name { font-size: 10.6cqi; }
   .hero__row--names { padding: 0; }
   .hero__row--meta { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 4.2cqi; padding-bottom: 3cqi; }
-  .hero__row--meta p:last-child { align-self: flex-end; }
   .hero__word { font-size: 26.6cqi; padding-bottom: calc(6cqi + env(safe-area-inset-bottom)); }
   .hero__scroll { width: 30vw; margin-left: -15vw; top: 36%; }
 }
