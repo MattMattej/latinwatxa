@@ -11,6 +11,7 @@ assets/css/styles.css          estilos; medidas tomadas del lienzo 1920×1080 de
 assets/js/main.js              animaciones, nav, menú mobile, reels de Instagram
 assets/fonts/                  Coolvetica (subconjuntos extraídos del PDF)
 assets/img/                    imágenes en WebP (dos tamaños para srcset)
+assets/video/                  videos propios (Cowork Prado), H.264 comprimido
 assets/mediakit-…-2026.pdf     PDF descargable
 ```
 
@@ -28,7 +29,11 @@ Settings → Pages → Source: *Deploy from a branch* → `main` / `/ (root)`.
 
 ## Editar contenido
 
-- **Reels**: en `index.html`, sección `[ 04 ] VIDEOS`. Cada reel es un `<div class="reel" data-reel="URL">`. La URL va sin parámetros de seguimiento (`?igsh=…`). Para agregar una categoría, se suma un `<button role="tab">` y su `<div role="tabpanel">`.
+- **Reels de Instagram**: en `index.html`, sección "reels destacados" (dentro de `[ 03 ] TRABAJOS`). Cada reel es un `<div class="reel" data-reel="URL">`. La URL va sin parámetros de seguimiento (`?igsh=…`). Para agregar una categoría, se suma un `<button role="tab">` y su `<div role="tabpanel">`.
+- **Videos propios** (los que no están en Instagram, como Cowork Prado): cada teléfono es un `<div class="vphone">` con la portada y un botón `data-video="assets/video/….mp4"`. El video se reproduce dentro de la pantalla del teléfono y no se descarga hasta que alguien toca play. Para sumar uno nuevo, comprimirlo así:
+  ```
+  ffmpeg -i original.mp4 -c:v libx264 -preset slow -crf 30 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 96k salida.mp4
+  ```
 - **Testimonios**: en `assets/js/main.js`, completar el array `TESTIMONIALS`. Cuando tenga datos, la sección "Marcas que confiaron en mí" los muestra solos.
 - **Marcas del carrusel**: los `<span>` dentro de `.marquee__row` en `index.html`.
 

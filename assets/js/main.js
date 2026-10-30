@@ -89,7 +89,7 @@
   }
 
   // índices de stagger
-  $$('.service, .phones .phone, .features li, .contact__list li, .menu__inner a').forEach((el) => {
+  $$('.service, .phones .phone, .vphone, .features li, .contact__list li, .menu__inner a').forEach((el) => {
     el.style.setProperty('--i', [...el.parentElement.children].indexOf(el));
   });
   $$('.tabs i').forEach((el, i) => el.style.setProperty('--i', i % 4));
@@ -433,6 +433,41 @@
 
     // los embeds cambian de alto al cargar: avisar a Lenis
     if (lenis) new ResizeObserver(() => lenis.resize()).observe(reelsRoot);
+  }
+
+  /* ---------- videos propios dentro de los teléfonos (Cowork Prado) ---------- */
+  // el <video> se crea recién al tocar play: hasta entonces no se descarga nada
+  const vphones = $$('.vphone');
+  const stopPhone = (ph) => {
+    const v = $('video', ph);
+    if (v) v.pause();
+    ph.classList.remove('is-playing');
+  };
+  vphones.forEach((ph) => {
+    const btn = $('.vphone__play', ph);
+    btn.addEventListener('click', () => {
+      vphones.forEach((o) => { if (o !== ph) stopPhone(o); });
+      let v = $('video', ph);
+      if (!v) {
+        v = document.createElement('video');
+        v.src = btn.dataset.video;
+        v.controls = true;
+        v.playsInline = true;
+        v.setAttribute('playsinline', '');
+        v.preload = 'auto';
+        v.addEventListener('ended', () => { ph.classList.remove('is-playing'); v.currentTime = 0; });
+        $('.vphone__screen', ph).appendChild(v);
+      }
+      ph.classList.add('is-playing');
+      v.play().catch(() => ph.classList.remove('is-playing'));
+    });
+  });
+  // pausar si el teléfono sale de pantalla
+  if (vphones.length) {
+    const vio = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (!e.isIntersecting && $('video', e.target)) $('video', e.target).pause(); });
+    }, { threshold: 0.15 });
+    vphones.forEach((ph) => vio.observe(ph));
   }
 
   /* ---------- testimonios ---------- */
