@@ -817,8 +817,8 @@ section { position: relative; }
 .contact__lead { font-weight: 300; font-size: clamp(1.2rem, 2.34vw, 3.1rem); line-height: 1.2; max-width: 21em; }
 .contact__big { margin-top: 2.6vw; font-weight: 500; font-size: clamp(1.9rem, 3.65vw, 4.9rem); line-height: 1.2; max-width: 19em; letter-spacing: -.004em; }
 .contact__list {
-  margin-top: auto; padding: 5.4vw 9vw 0 10.5vw;
-  display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: end; text-align: center;
+  margin-top: auto; padding: 5.4vw var(--mx) 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 24vw)); justify-content: center; column-gap: 10vw; align-items: end; text-align: center;
 }
 .contact__list li { --d: calc(var(--i, 0) * .06s); display: flex; flex-direction: column; align-items: center; gap: 1.4vw; font-weight: 300; font-size: clamp(1rem, 1.5625vw, 2.1rem); }
 .contact__list a { text-decoration: none; }
@@ -830,8 +830,18 @@ section { position: relative; }
 .contact__ic .ic--mail { aspect-ratio: 68/59; height: 50%; }
 .contact__ic .ic--tel { aspect-ratio: 90/102; height: 70%; }
 .contact__list li:hover .contact__ic svg { transform: translateY(-6px) rotate(-8deg); }
-.copy { font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--cream-ink) 45%, transparent); margin-top: -.4vw; transition: background-color .3s, color .3s; }
-.copy:hover { background: var(--cream-ink); color: var(--magenta); }
+/* mail: botón que copia la dirección (no se muestra escrita) */
+.contact__mail { display: flex; flex-direction: column; align-items: center; gap: 1.4vw; color: inherit; }
+.contact__mail-label {
+  display: inline-flex; align-items: center; gap: .5em;
+  font-weight: 500; font-size: clamp(.95rem, 1.15vw, 1.5rem); line-height: 1;
+  padding: .85em 1.5em; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cream-ink) 55%, transparent);
+  transition: background-color .3s, color .3s, border-color .3s;
+}
+.contact__mail:hover .contact__mail-label, .contact__mail.is-copied .contact__mail-label { background: var(--cream-ink); color: var(--magenta); border-color: var(--cream-ink); }
+.contact__mail:hover .contact__ic svg { transform: translateY(-6px) rotate(-8deg); }
+.menu__foot button { font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
 .contact__ctas { margin-top: 4.2vw; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 0 var(--mx); }
 .btn {
   display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
@@ -849,6 +859,8 @@ section { position: relative; }
   .contact__lead { font-size: 1.25rem; }
   .contact__big { margin-top: 6vw; font-size: 2rem; line-height: 1.15; }
   .contact__list { grid-template-columns: 1fr; gap: 34px; padding-top: 16vw; }
+  .contact__mail { gap: 14px; }
+  .contact__mail-label { font-size: 1rem; }
   .contact__list li { gap: 12px; font-size: 1.1rem; }
   .contact__ic { height: 56px; }
   .contact__ctas { margin-top: 14vw; flex-direction: column; align-items: stretch; text-align: center; }
@@ -892,7 +904,7 @@ section { position: relative; }
   position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 90;
   transform: translate(-50%, 140%); opacity: 0;
   background: var(--ink); color: var(--cream); font-size: 14px; font-weight: 500;
-  padding: 12px 20px; border-radius: 999px; pointer-events: none;
+  padding: 12px 20px; border-radius: 999px; pointer-events: none; white-space: nowrap;
   transition: transform .6s var(--ease), opacity .4s;
 }
 .toast.is-on { transform: translate(-50%, 0); opacity: 1; }
@@ -909,7 +921,7 @@ section { position: relative; }
    ========================================================= */
 html { -webkit-tap-highlight-color: transparent; }
 @media (hover: none) {
-  .btn:active, .nav__cta:active, .copy:active, .reels__tabs button:active, .nav__burger:active { transform: scale(.96); transition-duration: .15s; }
+  .btn:active, .nav__cta:active, .contact__mail:active .contact__mail-label, .reels__tabs button:active, .nav__burger:active { transform: scale(.96); transition-duration: .15s; }
   .phone:active .phone__img { transform: translateY(-6px); }
 }
 @media (max-width: 760px) {

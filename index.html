@@ -67,7 +67,7 @@
     <a href="#contacto"><i>[ 06 ]</i><span>CONTACTO</span></a>
   </nav>
   <div class="menu__foot">
-    <a href="mailto:valentinapaulacabrera@gmail.com">valentinapaulacabrera@gmail.com</a>
+    <button type="button" data-copy-mail><span data-copy-label>Copiar mail</span></button>
     <a href="https://www.instagram.com/latinwatxa/" target="_blank" rel="noopener">Instagram ↗</a>
   </div>
 </div>
@@ -427,17 +427,14 @@
       <span>Mvd, Uruguay</span>
     </li>
     <li data-reveal>
-      <a class="contact__ic" href="mailto:valentinapaulacabrera@gmail.com" aria-label="Escribir un mail"><svg aria-hidden="true" class="ic--mail"><use href="#ic-mail"/></svg></a>
-      <a href="mailto:valentinapaulacabrera@gmail.com">valentinapaulacabrera@gmail.com</a>
-      <button class="copy" type="button" data-copy="valentinapaulacabrera@gmail.com">Copiar mail</button>
-    </li>
-    <li data-reveal>
-      <a class="contact__ic" href="https://wa.me/59891036341" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg aria-hidden="true" class="ic--tel"><use href="#ic-tel"/></svg></a>
-      <a href="https://wa.me/59891036341" target="_blank" rel="noopener">091036341</a>
+      <button class="contact__mail" type="button" data-copy-mail aria-label="Copiar mi mail al portapapeles">
+        <span class="contact__ic"><svg aria-hidden="true" class="ic--mail"><use href="#ic-mail"/></svg></span>
+        <span class="contact__mail-label" data-copy-label>Copiar mail</span>
+      </button>
     </li>
   </ul>
   <div class="contact__ctas" data-reveal>
-    <a class="btn btn--cream" href="mailto:valentinapaulacabrera@gmail.com?subject=Colaboraci%C3%B3n%20con%20%40latinwatxa">Escribime</a>
+    <a class="btn btn--cream" href="#contacto" data-mailto="Colaboración con @latinwatxa">Escribime</a>
     <a class="btn btn--line" href="https://www.instagram.com/latinwatxa/" target="_blank" rel="noopener">Instagram ↗</a>
     <a class="btn btn--line" href="assets/mediakit-valentina-cabrera-2026.pdf" download>Descargar Media Kit (PDF)</a>
   </div>

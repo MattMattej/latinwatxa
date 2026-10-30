@@ -15,6 +15,13 @@
      { quote: '…', author: 'Nombre — Marca' } */
   const TESTIMONIALS = [];
 
+  /* Mail de contacto: se arma acá para que no quede escrito en el HTML
+     (ni visible ni al alcance de los robots que juntan direcciones). */
+  const MAIL = ['valentinapaulacabrera', 'gmail.com'].join('@');
+  $$('[data-mailto]').forEach((a) => {
+    a.href = `mailto:${MAIL}?subject=${encodeURIComponent(a.dataset.mailto)}`;
+  });
+
   /* ---------- split de texto (títulos letra por letra, párrafos palabra por palabra) ---------- */
   function splitChars(el) {
     let i = 0;
@@ -502,12 +509,33 @@
     clearTimeout(toastT);
     toastT = setTimeout(() => toast.classList.remove('is-on'), 2200);
   };
-  $$('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+  async function copyText(text) {
     try {
-      await navigator.clipboard.writeText(b.dataset.copy);
-      showToast('Mail copiado :)');
+      await navigator.clipboard.writeText(text);
+      return true;
     } catch {
-      showToast(b.dataset.copy);
+      // navegadores sin Clipboard API (o http sin permisos)
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  }
+  $$('[data-copy-mail]').forEach((b) => b.addEventListener('click', async () => {
+    const label = $('[data-copy-label]', b);
+    const ok = await copyText(MAIL);
+    showToast(ok ? 'Mail copiado :)' : 'No se pudo copiar, probá con “Escribime”');
+    if (ok && label) {
+      b.classList.add('is-copied');
+      label.textContent = '¡Copiado!';
+      clearTimeout(b._t);
+      b._t = setTimeout(() => { label.textContent = 'Copiar mail'; b.classList.remove('is-copied'); }, 2200);
     }
   }));
 
